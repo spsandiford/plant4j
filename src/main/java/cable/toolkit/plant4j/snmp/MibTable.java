@@ -8,9 +8,13 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -57,6 +61,103 @@ public class MibTable {
 		}
 	}
 	
+	class ColumnRetrieverThread {
+		CompletableFuture<?> threadFuture;
+		final Queue<VariableBinding> queue;
+		final Lock queueLock;
+		final Condition queueNotEmpty;
+		
+		ColumnRetrieverThread() {
+			this.queueLock = new ReentrantLock();
+			this.queueNotEmpty = this.queueLock.newCondition();
+			this.queue = new ConcurrentLinkedQueue<VariableBinding>();
+		}
+		public CompletableFuture<?> getThreadFuture() {
+			return threadFuture;
+		}
+		public void setThreadFuture(CompletableFuture<?> threadFuture) {
+			this.threadFuture = threadFuture;
+		}
+		
+		public void start(Runnable runnable, Executor executor) {
+			assert(this.threadFuture == null);
+			this.threadFuture = CompletableFuture.runAsync(runnable, executor);
+		}
+		
+		/**
+		 * Atomically add a variable binding to the queue
+		 * @param vb
+		 */
+		public void enqueue(VariableBinding vb) {
+			this.queueLock.lock();
+			try {
+				this.queue.add(vb);
+				this.queueNotEmpty.signal();
+			} finally {
+				this.queueLock.unlock();
+			}
+		}
+		
+		public VariableBinding dequeue() {
+			this.queueLock.lock();
+			try {
+				return this.queue.poll();
+			} finally {
+				this.queueLock.unlock();
+			}
+		}
+		
+		public VariableBinding peek() {
+			this.queueLock.lock();
+			try {
+				return this.queue.peek();
+			} finally {
+				this.queueLock.unlock();
+			}
+		}
+		
+		/**
+		 * Check whether the thread has finished execution and the queue
+		 * has been completely drained
+		 * @return
+		 */
+		public boolean isCompletelyDone() {
+			this.queueLock.lock();
+			try {
+				if (this.threadFuture.isDone() && this.queue.isEmpty()) {
+					return true;
+				} else {
+					return false;
+				}
+			} finally {
+				this.queueLock.unlock();
+			}
+		}
+		
+		/**
+		 * Wait for this thread's queue to receive at least one VariableBinding
+		 */
+		public void waitForNonEmptyQueue() {
+			this.queueLock.lock();
+			try {
+				while (this.queue.isEmpty()) {
+					logger.trace("Waiting for queue to receive a value");
+					try {
+						this.queueNotEmpty.await();
+					} catch (InterruptedException e) {
+						logger.warn("Interrupted while waiting for non-empty queue",e);
+					}
+				}
+			} finally {
+				this.queueLock.unlock();
+			}
+		}
+		
+		public void join() {
+			this.threadFuture.join();
+		}
+	}
+	
 	/**
 	 * Traverse a set of MIB table columns using a different thread for each column.
 	 * Uses SNMP BULKGET requests with a given repetition size.  Calls the given consumer
@@ -91,87 +192,63 @@ public class MibTable {
 		// Create a thread pool to handle each column in a separate thread
 		ExecutorService workerThreadPool = Executors.newFixedThreadPool(mibTableColumns.size());
 		
-		// Start the thread for each column and collect the Future(s)
-		List<CompletableFuture<?>> columnFutures = new ArrayList<CompletableFuture<?>>();
-		List<Queue<VariableBinding>> queueList = new ArrayList<Queue<VariableBinding>>();
+		// Start the thread for each column
+		List<ColumnRetrieverThread> threadList = new ArrayList<ColumnRetrieverThread>();
 		mibTableColumns.forEach(column -> {
-			Queue<VariableBinding> queue = new ConcurrentLinkedQueue<VariableBinding>();
-			queueList.add(queue);
+			ColumnRetrieverThread columnThread = new ColumnRetrieverThread();
+			threadList.add(columnThread);
 
 			Consumer<VariableBinding> c = vb -> {
-				logger.trace("Adding variable binding " + vb.getOid().toString());
-				queue.add(vb);
+				logger.trace("Adding variable binding to queue " + vb.getOid().toString());
+				columnThread.enqueue(vb);
 			};
 			
-			CompletableFuture<?> columnFuture = CompletableFuture.runAsync(() -> column.bulkGetTableColumn(maxRepetitions, c), workerThreadPool); 
-			columnFutures.add(columnFuture);
+			columnThread.start(() -> column.bulkGetTableColumn(maxRepetitions, c), workerThreadPool);
 		});
 
 		boolean done = false;
-		Long queueListSize = new Long(queueList.size());
-		Long threadListSize = new Long(columnFutures.size());
 		while (!done) {
-			List<Boolean> threadCompletions = columnFutures.stream().map(f -> new Boolean(f.isDone())).collect(Collectors.toList());
-			Long numFinishedThreads = threadCompletions.stream().filter(b -> b.equals(Boolean.TRUE)).collect(Collectors.counting());
-			List<VariableBinding> heads = queueList.stream().map(q -> q.peek()).collect(Collectors.toList());
-			Long numEmptyQueues = heads.stream().filter(vb -> vb == null).collect(Collectors.counting());
-			logger.trace("Number of finished threads " + numFinishedThreads.toString());
-			logger.trace("Number of empty queues " + numEmptyQueues.toString());
 			
-			// If all of the queues are empty and all of the threads are done, then we are done
-			if (numEmptyQueues.equals(queueListSize) && numFinishedThreads.equals(threadListSize)) {
+			// If any thread is completely done and the queue has been drained
+			// then we will not get any more complete rows so we're finished
+			if (threadList.stream().filter(t -> t.isCompletelyDone()).findAny().isPresent()) {
+				logger.info("A thread has finished and its queue has been drained");
 				done = true;
 				break;
 			}
 			
-			// If there are no empty queues, check for a complete row
-			if (numEmptyQueues.equals(NumberUtils.LONG_ZERO)) {
-				// Get the subindexes of all of the results
-				List<OID> subIndexes = heads.stream()
-						.map(vb -> new OID(Arrays.copyOfRange(vb.getOid().toIntArray(), firstColumnOIDSize, vb.getOid().size())))
-						.collect(Collectors.toList());
+			// Wait for all queues to be non-empty
+			threadList.stream().forEach(t -> t.waitForNonEmptyQueue());
 
-				// If all of the results have the same subindex,
-				// We have a complete row
-				List<Integer> comparisons = subIndexes.stream().map(oid -> oid.compareTo(subIndexes.get(0))).collect(Collectors.toList());
-				if (comparisons.stream().filter(c -> c.equals(NumberUtils.INTEGER_ZERO)).collect(Collectors.counting()).equals(queueListSize)) {
-					rowConsumer.accept(queueList.stream().map(q -> q.poll()).collect(Collectors.toList()));
-				} else {
-					// We see an inconsistency in the columns
-					// Remove the element from the queue that got the lowest score
-					// in the comparison
-					int minIndex = comparisons.indexOf(Collections.min(comparisons));
-					logger.warn("Table inconsistency");
-					logger.warn(heads.stream().map(vb -> vb.getOid()).collect(Collectors.toList()).toString());
-					logger.warn("Removing " + heads.get(minIndex).getOid());
-					queueList.get(minIndex).remove();
-				}
-				
+			// Peek at the head of every queue and get its sub-index
+			List<OID> subIndexes = threadList.stream()
+					.map(q -> q.peek())
+					.map(vb -> new OID(Arrays.copyOfRange(vb.getOid().toIntArray(), firstColumnOIDSize, vb.getOid().size())))
+					.collect(Collectors.toList());
+			
+			// Compare all sub-indexes to the sub-index from the first queue
+			OID toCompare = subIndexes.get(0);
+			List<Integer> comparisons = subIndexes.stream().map(oid -> oid.compareTo(toCompare)).collect(Collectors.toList());
+
+			// Unless all of the results match the sub-index of the first queue we have
+			// an inconsistency to correct
+			if (comparisons.stream().filter(c -> c.compareTo(NumberUtils.INTEGER_ZERO) != 0).findAny().isPresent()) {
+				// Remove the element from the queue that got the lowest score
+				// in the comparison
+				int minIndex = comparisons.indexOf(Collections.min(comparisons));
+				VariableBinding vb = threadList.get(minIndex).dequeue();
+				logger.warn("Table inconsistency");
+				logger.warn("Removed " + vb.getOid());
 			} else {
-				if (numFinishedThreads.equals(NumberUtils.LONG_ZERO)) {
-
-					// If all of the threads are still running, wait a bit
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-				} else {
-				
-					// If the queue that is empty corresponds to a thread
-					// that has finished, we're not going to get any more
-					// complete rows
-				}
-				
+				// All of the sub-indexes match, accept the row results
+				rowConsumer.accept(threadList.stream().map(t -> t.dequeue()).collect(Collectors.toList()));
 			}
+			
+			
 		}
 		
 		// Join all of the column threads
-		CompletableFuture<?>[] cfs = columnFutures.toArray(new CompletableFuture<?>[columnFutures.size()]);
-		CompletableFuture.allOf(cfs).join();
-
+		threadList.stream().forEach(t -> t.join());
 		this.closeThreadPool(workerThreadPool);
 	}
 
