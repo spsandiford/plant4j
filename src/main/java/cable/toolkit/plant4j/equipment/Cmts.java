@@ -176,6 +176,6 @@ public class Cmts implements CpeListProducer {
 			}
 		};
 		
-		cpeIpTable.bulkGetRowsQueue(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
+		cpeIpTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
 	}
 }

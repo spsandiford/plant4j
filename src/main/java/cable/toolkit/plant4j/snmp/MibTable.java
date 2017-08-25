@@ -167,7 +167,7 @@ public class MibTable {
 	 * @param columnOIDs
 	 * @param rowConsumer
 	 */
-	public void bulkGetRowsQueue(int maxRepetitions, List<OID> columnOIDs, Consumer<List<VariableBinding>> rowConsumer) {
+	public void getRows(int maxRepetitions, List<OID> columnOIDs, Consumer<List<VariableBinding>> rowConsumer) {
 		
 		Objects.requireNonNull(columnOIDs);
 		Objects.requireNonNull(rowConsumer);
