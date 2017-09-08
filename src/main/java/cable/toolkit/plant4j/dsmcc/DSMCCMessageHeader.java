@@ -220,7 +220,6 @@ public class DSMCCMessageHeader {
 
 	}
 	
-	
 	public BigInteger getTransactionId() {
 		return transactionId;
 	}
@@ -241,8 +240,16 @@ public class DSMCCMessageHeader {
 		bb.put((byte)(this.messageLength.intValue() & 0xFF));
 		return bb;
 	}
-	
-	public static DSMCCMessageHeader fromBytes(byte[] bytes) throws IOException {
+
+	/**
+	 * Parse a given sequence of bytes to read the DSM-CC message header.
+	 * 
+	 * @param bytes
+	 * @return
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 */
+	protected static DSMCCMessageHeader fromBytes(byte[] bytes) throws IOException, IllegalArgumentException {
 		if (bytes.length < MESSAGE_HEADER_SIZE) {
 			throw new IllegalArgumentException("byte buffer is too short to contain a DSM-CC header");
 		}
