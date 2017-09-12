@@ -2,9 +2,9 @@ package cable.toolkit.plant4j.dsmcc;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -136,7 +136,7 @@ public class DSMCCMessageHeaderTest {
 
 	@Test
 	public void testToBytes() {
-		ByteBuffer bb = DSMCCMessageHeader
+		byte[] bytes = DSMCCMessageHeader
 				.dsmccType(0x01)
 				.messageId(0x01)
 				.transactionId(BigInteger.valueOf(50L))
@@ -144,14 +144,19 @@ public class DSMCCMessageHeaderTest {
 				.messageLength(100)
 				.build()
 				.toBytes();
-		bb.rewind();
-		assertEquals((byte)0x11,bb.get());
-		assertEquals((byte)0x01,bb.get());
-		assertEquals((short)0x0001,bb.getShort());
-		assertEquals(50,bb.getInt());
-		assertEquals((byte)0xFF,bb.get());
-		assertEquals((byte)0x00,bb.get());
-		assertEquals((short)100,bb.getShort());
+		ByteArrayInputStream bb = new ByteArrayInputStream(bytes);
+		assertEquals(0x11,bb.read());
+		assertEquals(0x01,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x01,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x32,bb.read());
+		assertEquals(0xFF,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x00,bb.read());
+		assertEquals(0x64,bb.read());
 	}
 	
 	@Test

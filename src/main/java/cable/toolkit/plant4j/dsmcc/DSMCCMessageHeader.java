@@ -1,11 +1,11 @@
 package cable.toolkit.plant4j.dsmcc;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
@@ -49,7 +49,7 @@ public class DSMCCMessageHeader {
 	public static final int DSMCC_TYPE_SDB_CCP = 0x04;
 	public static final int DSMCC_TYPE_UN_PASSTHRU = 0x05;
 	
-	private static final byte PROTOCOL_DISCRIMINATOR = 0x11;
+	private static final int PROTOCOL_DISCRIMINATOR = 0x11;
 	protected static final int MESSAGE_HEADER_SIZE = 12;  // 1+1+2+4+1+1+2
 	
 	Integer dsmccType;
@@ -224,21 +224,21 @@ public class DSMCCMessageHeader {
 		return transactionId;
 	}
 
-	protected ByteBuffer toBytes() {
-		ByteBuffer bb = ByteBuffer.allocate(MESSAGE_HEADER_SIZE);
-		bb.put(PROTOCOL_DISCRIMINATOR);
-		bb.put((byte)(this.dsmccType.intValue() & 0xFF));
-		bb.put((byte)((this.messageId.intValue() & 0xFF00) >> 8));
-		bb.put((byte)(this.messageId.intValue() & 0xFF));
-		bb.put((byte)((this.transactionId.longValue() & 0xFF000000) >> 24));
-		bb.put((byte)((this.transactionId.longValue() & 0xFF0000) >> 16));
-		bb.put((byte)((this.transactionId.longValue() & 0xFF00) >> 8));
-		bb.put((byte)(this.transactionId.longValue() & 0xFF));
-		bb.put((byte)0xFF);
-		bb.put((byte)(this.adaptationLength.intValue() & 0xFF));
-		bb.put((byte)((this.messageLength.intValue() & 0xFF00) >> 8));
-		bb.put((byte)(this.messageLength.intValue() & 0xFF));
-		return bb;
+	protected byte[] toBytes() {
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		bytes.write(PROTOCOL_DISCRIMINATOR);
+		bytes.write(this.dsmccType.intValue() & 0xFF);
+		bytes.write((this.messageId.intValue() >> 8) & 0xFF);
+		bytes.write(this.messageId.intValue() & 0xFF);
+		bytes.write((int)((this.transactionId.longValue() >> 24) & 0xFF));
+		bytes.write((int)((this.transactionId.longValue() >> 16) & 0xFF));
+		bytes.write((int)((this.transactionId.longValue() >> 8) & 0xFF));
+		bytes.write((int)(this.transactionId.longValue() & 0xFF));
+		bytes.write(0xFF); // reserved
+		bytes.write(this.adaptationLength.intValue() & 0xFF);
+		bytes.write((this.messageLength.intValue() >> 8) & 0xFF);
+		bytes.write(this.messageLength.intValue() & 0xFF);
+		return bytes.toByteArray();
 	}
 
 	/**
