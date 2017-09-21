@@ -47,6 +47,8 @@ public class MibTableColumn {
 			throw new IllegalArgumentException();
 		}
 
+		Thread.currentThread().setName("MibTableColumn " + this.columnOID + " " + this.target.getAddress().toString());
+
 		OID currentOID = this.columnOID;
 		
 		for (int i=0; i<MAX_BULK_GET_ITERATIONS; i++) {
@@ -98,6 +100,8 @@ public class MibTableColumn {
 			}
 		}
 		
+		Thread.currentThread().setName("MibTableColumn done " + this.columnOID + " " + this.target.getAddress().toString());
+
 	}
 
 }
