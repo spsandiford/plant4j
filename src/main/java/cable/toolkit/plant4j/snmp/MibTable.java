@@ -210,6 +210,9 @@ public class MibTable {
 		boolean done = false;
 		while (!done) {
 			
+			// Wait for all queues to be non-empty or finished threads
+			threadList.stream().forEach(t -> t.waitForNonEmptyQueueOrFinish());
+
 			// If any thread is completely done and the queue has been drained
 			// then we will not get any more complete rows so we're finished
 			if (threadList.stream().filter(t -> t.isCompletelyDone()).findAny().isPresent()) {
@@ -218,9 +221,6 @@ public class MibTable {
 				break;
 			}
 			
-			// Wait for all queues to be non-empty
-			threadList.stream().forEach(t -> t.waitForNonEmptyQueueOrFinish());
-
 			// Peek at the head of every queue and get its sub-index
 			List<OID> subIndexes = threadList.stream()
 					.map(q -> q.peek())
