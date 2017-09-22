@@ -136,14 +136,15 @@ public class MibTable {
 		
 		/**
 		 * Wait for this thread's queue to receive at least one VariableBinding
+		 * or for the thread to finish
 		 */
-		public void waitForNonEmptyQueue() {
+		public void waitForNonEmptyQueueOrFinish() {
 			this.queueLock.lock();
 			try {
-				while (this.queue.isEmpty()) {
+				while (!this.threadFuture.isDone() && this.queue.isEmpty()) {
 					logger.trace("Waiting for queue to receive a value");
 					try {
-						this.queueNotEmpty.await();
+						this.queueNotEmpty.await(5,TimeUnit.SECONDS);
 					} catch (InterruptedException e) {
 						logger.warn("Interrupted while waiting for non-empty queue",e);
 					}
@@ -218,7 +219,7 @@ public class MibTable {
 			}
 			
 			// Wait for all queues to be non-empty
-			threadList.stream().forEach(t -> t.waitForNonEmptyQueue());
+			threadList.stream().forEach(t -> t.waitForNonEmptyQueueOrFinish());
 
 			// Peek at the head of every queue and get its sub-index
 			List<OID> subIndexes = threadList.stream()
