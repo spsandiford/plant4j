@@ -16,6 +16,8 @@ import org.snmp4j.Target;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.VariableBinding;
+
+import cable.toolkit.plant4j.docsis.DocsIF3Mib;
 import cable.toolkit.plant4j.docsis.DocsSubMgt3Mib;
 import cable.toolkit.plant4j.snmp.MibTable;
 import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
@@ -31,7 +33,7 @@ import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
  * @author psandiford
  *
  */
-public class Cmts implements CpeListProducer {
+public class Cmts implements CpeListProducer, CableModemListProducer {
 
 	private static final int CMTS_SNMP_RETRIES = 2;
 	private static final int CMTS_SNMP_TIMEOUT = 5000;
@@ -106,6 +108,10 @@ public class Cmts implements CpeListProducer {
 		this.snmp = Objects.requireNonNull(snmp);
 	}
 	
+	public Target getTarget() {
+		return this.target;
+	}
+	
 	/**
 	 * Get the SNMP Agent system details for this CMTS
 	 */
@@ -177,5 +183,57 @@ public class Cmts implements CpeListProducer {
 		};
 		
 		cpeIpTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
+	}
+
+	@Override
+	public void produceCableModemsList(Consumer<CableModem> consumer) {
+		Objects.requireNonNull(this.snmp);
+		Objects.requireNonNull(this.target);
+		
+		discoverAllCableModems((c) -> consumer.accept(c));
+	}
+
+	@Override
+	public void produceCableModemsList(ExecutorService threadPool, Consumer<CableModem> consumer) {
+		Objects.requireNonNull(this.snmp);
+		Objects.requireNonNull(this.target);
+		
+		discoverAllCableModems((c) -> {
+			threadPool.submit(() -> consumer.accept(c));
+		});
+	}
+	
+	private void discoverAllCableModems(Consumer<CableModem> consumer) {
+		MibTable docsIf3CmtsCmRegStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTable,this.snmp,this.target);
+		List<OID> columnOIDs = new ArrayList<OID>();
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusIPv4Addr);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusValue);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusLastRegTime);
+		
+		Consumer<List<VariableBinding>> rowConsumer = list -> {
+			VariableBinding vb_macaddr = list.get(0);
+			VariableBinding vb_ipv4addr = list.get(1);
+			VariableBinding vb_rsvalue = list.get(2);
+			VariableBinding vb_lastreg = list.get(3);
+			
+			Long rsid = vb_macaddr.getOid().getUnsigned(vb_macaddr.getOid().size() - 2);
+			byte[] macAddrArray = ((OctetString) vb_macaddr.getVariable()).getValue();
+			byte[] ipv4addrArray = ((OctetString) vb_ipv4addr.getVariable()).getValue();
+			Integer rsValue = vb_rsvalue.getVariable().toInt();
+			byte[] lastRegTime = ((OctetString) vb_lastreg.getVariable()).getValue();
+			try {
+				InetAddress ipv4Address = InetAddress.getByAddress(ipv4addrArray);
+				CableModem cm = new CableModem(macAddrArray);
+				cm.setRsid(rsid);
+				cm.setIpv4addr(ipv4Address);
+				cm.setRegStatusValue(rsValue);
+				consumer.accept(cm);
+			} catch (UnknownHostException e) {
+				this.logger.error("Unable to process InetAddress", e);
+			}
+		};
+		
+		docsIf3CmtsCmRegStatusTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
 	}
 }
