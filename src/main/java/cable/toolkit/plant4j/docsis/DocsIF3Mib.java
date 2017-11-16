@@ -29,6 +29,374 @@ public class DocsIF3Mib {
 	public static final OID oid_docsIf3Mib = new OID("1.3.6.1.4.1.4491.2.1.20");
 	
 	/**
+	 * docsIf3CmStatusTable OBJECT-TYPE
+	 *      SYNTAX      SEQUENCE OF DocsIf3CmStatusEntry
+	 *      MAX-ACCESS  not-accessible
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This object defines attributes of the CM connectivity
+	 *         status.This object provides CM connectivity status
+	 *         information of the CM previously available in
+	 *         the SNMP table docsIfCmStatusTable."
+	 *      REFERENCE
+	 *         "RFC 4546"
+	 *      ::= { docsIf3MibObjects 1}
+	 */
+	public static final OID oid_docsIf3CmStatusTable = new OID("1.3.6.1.4.1.4491.2.1.20.1.1");
+	
+	/**
+	 * docsIf3CmStatusEntry OBJECT-TYPE
+	 *      SYNTAX      DocsIf3CmStatusEntry
+	 *      MAX-ACCESS  not-accessible
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *          "The conceptual row of docsIf3CmStatusTable.
+	 *          An instance exist for the CM MAC Domain Interface."
+	 *      INDEX {
+	 *              ifIndex
+	 *            }
+	 *      ::= { docsIf3CmStatusTable 1 }
+	 */
+	public static final OID oid_docsIf3CmStatusEntry = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1");
+	
+	/**
+	 * docsIf3CmStatusValue OBJECT-TYPE
+	 *      SYNTAX      CmRegState
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the current CM connectivity
+	 *         state. For the case of IP acquisition related states,
+	 *         this attribute reflects states for the current CM
+	 *         provisioning mode, not the other DHCP process associated
+	 *         with dual stack operation."
+	 *      REFERENCE
+	 *          "DOCSIS 3.0 MAC and Upper Layer Protocols Interface
+	 *          Specification CM-SP-MULPIv3.0-I08-080522, Establishing
+	 *          IP Connectivity section."
+	 *      ::= { docsIf3CmStatusEntry 1 }
+	 */
+	public static final OID oid_docsIf3CmStatusValue = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.1");
+	
+	/** indicates any state not described below. */
+	public static final int CmRegState_other = 1;
+	
+	/** indicates that the CM has not started the registration process */
+	public static final int CmRegState_notReady = 2;
+	
+	/**
+	 * indicates that the CM has not initiated or completed the
+	 * synchronization of the downstream physical layer
+	 */
+	public static final int CmRegState_notSynchronized = 3;
+	
+	/**
+	 * indicates that the CM has completed the synchronization of
+	 * the downstream physical layer
+	 */
+	public static final int CmRegState_phySynchronized = 4;
+	
+	/** indicates that the CM is attempting to determine its MD-DS-SG */
+	public static final int CmRegState_dsTopologyResolutionInProgress = 21;
+	
+	/**
+	 * indicates that the CM has completed the upstream parameters
+	 * acquisition or have completed the downstream and upstream
+	 * service groups resolution, wheater the CM is registering in
+	 * a pre-3.0 or a 3.0 CMTS.
+	 */
+	public static final int CmRegState_usParametersAcquired = 5;
+	
+	/** indicates that the CM has initiated the ranging process. */
+	public static final int CmRegState_rangingInProgress = 22;
+	
+	/**
+	 * indicates that the CM has completed initial ranging and
+	 * received a Ranging Status of success from the CMTS in the
+	 * RNG-RSP message.
+	 */
+	public static final int CmRegState_rangingComplete = 6;
+	
+	/** indicates that the CM has sent an Auth Info message for EAE. */
+	public static final int CmRegState_eaeInProgress = 14;
+	
+	/** indicates that the CM has sent a DHCPv4 DISCOVER to gain IP connectivity. */
+	public static final int CmRegState_dhcpv4InProgress = 15;
+	
+	/** indicates that the CM has sent an DHCPv6 Solicit message. */
+	public static final int CmRegState_dhcpv6InProgress = 16;
+	
+	/** indicates that the CM has received a DHCPv4 ACK message from the CMTS. */
+	public static final int CmRegState_dhcpv4Complete = 7;
+	
+	/** indicates that the CM has received a DHCPv6 Reply message from the CMTS. */
+	public static final int CmRegState_dhcpv6Complete = 17;
+	
+	/**
+	 * indicates that the CM has successfully acquired time of day.
+	 * If the ToD is acquired after the CM is operational, this
+	 * value should not be reported.
+	 */
+	public static final int CmRegState_todEstablished = 8;
+	
+	/** indicates that the CM has successfully completed the BPI initialization process. */
+	public static final int CmRegState_securityEstablished = 9;
+	
+	/** indicates that the CM has completed the config file download process. */
+	public static final int CmRegState_configFileDownloadComplete = 10;
+	
+	/** indicates that the CM has sent a Registration Request (REG-REQ or REG-REQ-MP) */
+	public static final int CmRegState_registrationInProgress = 18;
+	
+	/**
+	 * indicates that the CM has successfully completed the
+	 * Registration process with the CMTS.
+	 */
+	public static final int CmRegState_registrationComplete = 11;
+	
+	/** indicates that the CM has received a registration aborted notification from the CMTS */
+	public static final int CmRegState_accessDenied = 13;
+	
+	/**
+	 * indicates that the CM has completed all necessary
+	 * initialization steps and is operational.
+	 */
+	public static final int CmRegState_operational = 12;
+	
+	/**
+	 * indicates that the CM has started the BPI initialization
+	 * process as indicated in the CM config file. If the CM already
+	 * performed EAE, this state is skipped by the CM.
+	 */
+	public static final int CmRegState_bpiInit = 19;
+	
+	/**
+	 * indicates that the registration process was completed, but 
+	 * the network access option in the received configuration file
+	 * prohibits forwarding.
+	 */
+	public static final int CmRegState_forwardingDisabled = 20;
+	
+	/**
+	 * indicates that the CM is instructed to mute all channels 
+	 * in the CM-CTRL-REQ message from CMTS.
+	 */
+	public static final int CmRegState_rfMuteAll = 23;
+	
+	/**
+	 * docsIf3CmStatusCode OBJECT-TYPE
+	 *      SYNTAX      OCTET STRING (SIZE( 0 | 5 | 6 ))
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the status code for CM as defined
+	 *         in the OSSI Specification. The status code consists
+	 *         of a single character indicating error groups,
+	 *         followed by a two- or three-digit number indicating
+	 *         the status condition, followed by a decimal. An example
+	 *         of a returned value could be 'T101.0'. The zero-length
+	 *         hex string indicates no status code yet registered."
+	 *      REFERENCE
+	 *         "DOCSIS 3.0 Operations Support System Interface
+	 *          Specification CM-SP-OSSIv3.0-I07-080522, Format and Content
+	 *          for Event, Syslog, and SNMP Notification Annex."
+	 *      ::= { docsIf3CmStatusEntry 2 }
+	 */
+	public static final OID oid_docsIf3CmStatusCode = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.2");
+	
+	/**
+	 * docsIf3CmStatusResets OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "resets"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM reset
+	 *         or initialized this interface. Discontinuities
+	 *         in the value of this counter can occur at re-initialization
+	 *         of the managed system, and at other times as
+	 *         indicated by the value of ifCounterDiscontinuityTime
+	 *         for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 3 }
+	 */
+	public static final OID oid_docsIf3CmStatusResets = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.3");
+	
+	/**
+	 * docsIf3CmStatusLostSyncs OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "messages"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM lost
+	 *         synchronization with the downstream channel. Discontinuities
+	 *         in the value of this counter can occur
+	 *         at re-initialization of the managed system, and at
+	 *         other times as indicated by the value of
+	 *         ifCounterDiscontinuityTime for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 4 }
+	 */
+	public static final OID oid_docsIf3CmStatusLostSyncs = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.4");
+	
+	/**
+	 * docsIf3CmStatusInvalidMaps OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "maps"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM received
+	 *         invalid MAP messages. Discontinuities in the
+	 *         value of this counter can occur at re-initialization
+	 *         of the managed system, and at other times as indicated
+	 *         by the value of ifCounterDiscontinuityTime for
+	 *         the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 5 }
+	 */
+	public static final OID oid_docsIf3CmStatusInvalidMaps = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.5");
+	
+	/**
+	 * docsIf3CmStatusInvalidUcds OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "messages"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM received
+	 *         invalid UCD messages. Discontinuities in the
+	 *         value of this counter can occur at re-initialization
+	 *         of the managed system, and at other times as indicated
+	 *         by the value of ifCounterDiscontinuityTime for
+	 *         the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 6 }
+	 */
+	public static final OID oid_docsIf3CmStatusInvalidUcds = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.6");
+
+	/**
+	 * docsIf3CmStatusInvalidRangingRsps OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "messages"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM received
+	 *         invalid ranging response messages. Discontinuities
+	 *         in the value of this counter can occur at re-initialization
+	 *         of the managed system, and at other
+	 *         times as indicated by the value of ifCounterDiscontinuityTime
+	 *         for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 7 }
+	 */
+	public static final OID oid_docsIf3CmStatusInvalidRangingRsps = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.7");
+	
+	/**
+	 * docsIf3CmStatusInvalidRegRsps OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "messages"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times the CM received
+	 *         invalid registration response messages. Discontinuities
+	 *         in the value of this counter can occur
+	 *         at re-initialization of the managed system, and at
+	 *         other times as indicated by the value of
+	 *         ifCounterDiscontinuityTime for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 8 }
+	 */
+	public static final OID oid_docsIf3CmStatusInvalidRegRsps = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.8");
+	
+	/**
+	 * docsIf3CmStatusT1Timeouts OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "timeouts"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times counter
+	 *         T1 expired in the CM. Discontinuities in the value of
+	 *         this counter can occur at re-initialization of the
+	 *         managed system, and at other times as indicated by the
+	 *         value of ifCounterDiscontinuityTime for the CM MAC
+	 *         Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 9 }
+	 */
+	public static final OID oid_docsIf3CmStatusT1Timeouts = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.9");
+	
+	/**
+	 * docsIf3CmStatusT2Timeouts OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "timeouts"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of times counter
+	 *         T2 expired in the CM. Discontinuities in the value of
+	 *         this counter can occur at re-initialization of the
+	 *         managed system, and at other times as indicated by the
+	 *         value of ifCounterDiscontinuityTime for the CM MAC
+	 *         Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 10 }
+	 */
+	public static final OID oid_docsIf3CmStatusT2Timeouts = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.10");
+	
+	/**
+	 * docsIf3CmStatusUCCsSuccesses OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "attempts"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of successful Upstream
+	 *         Channel Change transactions. Discontinuities
+	 *         in the value of this counter can occur at re-initialization
+	 *         of the managed system, and at other times
+	 *         as indicated by the value of ifCounterDiscontinuityTime
+	 *          for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 11 }
+	 */
+	public static final OID oid_docsIf3CmStatusUCCsSuccesses = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.11");
+	
+	/**
+	 * docsIf3CmStatusUCCFails OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      UNITS       "attempts"
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute denotes the number of failed Upstream
+	 *         Channel Change transactions. Discontinuities
+	 *         in the value of this counter can occur at re-initialization
+	 *         of the managed system, and at other times as indicated
+	 *         by the value of ifCounterDiscontinuityTime
+	 *         for the CM MAC Domain interface."
+	 *      REFERENCE
+	 *         "RFC 2863."
+	 *      ::= { docsIf3CmStatusEntry 12 }
+	 */
+	public static final OID oid_docsIf3CmStatusUCCFails = new OID("1.3.6.1.4.1.4491.2.1.20.1.1.1.12");
+	
+	
+	
+	/**
 	 * docsIf3CmtsCmRegStatusTable OBJECT-TYPE
      *      SYNTAX      SEQUENCE OF DocsIf3CmtsCmRegStatusEntry
      *      MAX-ACCESS  not-accessible
@@ -149,79 +517,92 @@ public class DocsIF3Mib {
 	 *      DESCRIPTION
 	 *         "This data type defines the CM connectivity states as reported
 	 *         by the CMTS.
-	 *         The enumerated values associated with the CmtsCmRegState are:
-	 * 
-	 *         'other'
-	 *          indicates any state not described below.
-	 *         'initialRanging'
-	 *          indicates that the CMTS has received an Initial Ranging
-	 *          Request message from the CM, and the ranging process is not yet
-	 *          complete.
-	 *         'rangingAutoAdjComplete'
-	 *          indicates that the CM has completed initial ranging and the
-	 *          CMTS sends  a Ranging Status of success in the RNG-RSP.
-	 *         'startEae'
-	 *          indicates that the CMTS has received an Auth Info message for
-	 *          EAE from the CM.
-	 *         'startDhcpv4'
-	 *          indicates that the CMTS has received a DHCPv4 DISCOVER message
-	 *          from the CM.
-	 *         'startDhcpv6'
-	 *          indicates that the CMTS has received a DHCPv6 Solicit message
-	 *          from the CM.
-	 *         'dhcpv4Complete'
-	 *          indicates that the CMTS has sent a DHCPv4 ACK message to the
-	 *          CM.
-	 *         'dhcpv6Complete'
-	 *          indicates that the CMTS has sent a DHCPv6 Reply message to the
-	 *          CM.
-	 *         'startConfigFileDownload'
-	 *          indicates that the CM has started the config file download.
-	 *          If the TFTP Proxy feature is not enabled, the CMTS may not
-	 *          report this state.
-	 *         'configFileDownloadComplete'
-	 *          indicates that the CM has completed the config file download
-	 *          process.  If the TFTP Proxy feature is not enabled, the CMTS
-	 *          is not required to report this state.
-	 *         'startRegistration'
-	 *          indicates that the CMTS has received a Registration
-	 *          Request (REG-REQ or REG-REQ-MP) from the CM.
-	 *         'registrationComplete'
-	 *          indicates that the CMTS has received a Registration Acknowledge
-	 *          (REG-ACK) with a confirmation code of okay/success.
-	 *         'operational'
-	 *          indicates that the CM has completed all necessary
-	 *          initialization steps and is operational.
-	 *         'bpiInit'
-	 *          indicates that the CMTS has received an Auth Info or Auth
-	 *          Request message as part of BPI Initialization.
-	 *         'forwardingDisabled'
-	 *          indicates that the registration process was completed, but 
-	 *          the network access option in the received configuration 
-	 *          file prohibits forwarding.
-	 *         'rfMuteAll'
-	 *          indicates that the CM is instructed to mute all channels 
-	 *          in the CM-CTRL-REQ message from CMTS."
 	 *      REFERENCE
 	 *          "DOCSIS 3.0 MAC and Upper Layer Protocols Interface
 	 *          Specification CM-SP-MULPIv3.0-I08-080522, Cable Modem -
 	 *          CMTS Interaction section."
 	 */
+	
+	/** indicates any state not described below. */
 	public static final int CmtsCmRegState_other = 1;
+	
+	/**
+	 * indicates that the CMTS has received an Initial Ranging
+	 * Request message from the CM, and the ranging process is not yet
+	 * complete.
+	 */
 	public static final int CmtsCmRegState_initialRanging = 2;
+	
+	/**
+	 * indicates that the CM has completed initial ranging and the
+	 * CMTS sends a Ranging Status of success in the RNG-RSP.
+	 */
 	public static final int CmtsCmRegState_rangingAutoAdjComplete = 4;
+	
+	/** indicates that the CMTS has received an Auth Info message for EAE from the CM. */
 	public static final int CmtsCmRegState_startEae = 10;
+
+	/** indicates that the CMTS has received a DHCPv4 DISCOVER message from the CM. */
 	public static final int CmtsCmRegState_startDhcpv4 = 11;
+	
+	/** indicates that the CMTS has received a DHCPv6 Solicit message from the CM. */
 	public static final int CmtsCmRegState_startDhcpv6 = 12;
+	
+	/** indicates that the CMTS has sent a DHCPv4 ACK message to the CM. */
 	public static final int CmtsCmRegState_dhcpv4Complete = 5;
+	
+	/** indicates that the CMTS has sent a DHCPv6 Reply message to the CM. */
 	public static final int CmtsCmRegState_dhcpv6Complete = 13;
+	
+	/**
+	 * indicates that the CM has started the config file download.
+	 * If the TFTP Proxy feature is not enabled, the CMTS may not
+	 * report this state.
+	 */
 	public static final int CmtsCmRegState_startConfigFileDownload = 14;
+	
+	/**
+	 * indicates that the CM has completed the config file download
+	 * process.  If the TFTP Proxy feature is not enabled, the CMTS
+	 * is not required to report this state.
+	 */
 	public static final int CmtsCmRegState_configFileDownloadComplete = 15;
+	
+	/**
+	 * indicates that the CMTS has received a Registration
+	 * Request (REG-REQ or REG-REQ-MP) from the CM.
+	 */
 	public static final int CmtsCmRegState_startRegistration = 16;
+	
+	/**
+	 * indicates that the CMTS has received a Registration Acknowledge
+	 * (REG-ACK) with a confirmation code of okay/success.
+	 */
 	public static final int CmtsCmRegState_registrationComplete = 6;
+	
+	/**
+	 * indicates that the CM has completed all necessary
+	 * initialization steps and is operational.
+	 */
 	public static final int CmtsCmRegState_operational = 8;
+	
+	/**
+	 * indicates that the CMTS has received an Auth Info or Auth
+	 * Request message as part of BPI Initialization.
+	 */
 	public static final int CmtsCmRegState_bpiInit = 9;
+	
+	/**
+	 * indicates that the registration process was completed, but 
+	 * the network access option in the received configuration 
+	 * file prohibits forwarding.
+	 */
 	public static final int CmtsCmRegState_forwardingDisabled = 17;
+	
+	/**
+	 * indicates that the CM is instructed to mute all channels 
+	 * in the CM-CTRL-REQ message from CMTS."
+	 */
 	public static final int CmtsCmRegState_rfMuteAll = 18;
 
 	/**

@@ -17,6 +17,7 @@ import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.VariableBinding;
 
+import cable.toolkit.plant4j.docsis.DocsIF3CmStatusEntry;
 import cable.toolkit.plant4j.docsis.DocsIF3Mib;
 import cable.toolkit.plant4j.docsis.DocsSubMgt3Mib;
 import cable.toolkit.plant4j.snmp.MibTable;
@@ -190,7 +191,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		Objects.requireNonNull(this.snmp);
 		Objects.requireNonNull(this.target);
 		
-		discoverAllCableModems((c) -> consumer.accept(c));
+		walkCmtsCmRegStatusTable((c) -> consumer.accept(c));
 	}
 
 	@Override
@@ -198,12 +199,12 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		Objects.requireNonNull(this.snmp);
 		Objects.requireNonNull(this.target);
 		
-		discoverAllCableModems((c) -> {
+		walkCmtsCmRegStatusTable((c) -> {
 			threadPool.submit(() -> consumer.accept(c));
 		});
 	}
 	
-	private void discoverAllCableModems(Consumer<CableModem> consumer) {
+	private void walkCmtsCmRegStatusTable(Consumer<CableModem> consumer) {
 		MibTable docsIf3CmtsCmRegStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTable,this.snmp,this.target);
 		List<OID> columnOIDs = new ArrayList<OID>();
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
@@ -235,5 +236,61 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		};
 		
 		docsIf3CmtsCmRegStatusTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
+	}
+	
+	public void walkCmStatusTable(Consumer<DocsIF3CmStatusEntry> consumer) {
+		MibTable docsIf3CmStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmStatusTable,this.snmp,this.target);
+		List<OID> columnOIDs = new ArrayList<OID>();
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusValue);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusCode);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusResets);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusLostSyncs);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusInvalidMaps);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusInvalidUcds);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusInvalidRangingRsps);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusInvalidRegRsps);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusT1Timeouts);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusT2Timeouts);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusUCCsSuccesses);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusUCCFails);
+		
+		Consumer<List<VariableBinding>> rowConsumer = list -> {
+			VariableBinding vb_value = list.get(0);
+			VariableBinding vb_code = list.get(1);
+			VariableBinding vb_resets = list.get(2);
+			VariableBinding vb_lostSyncs = list.get(3);
+			VariableBinding vb_invalidMaps = list.get(4);
+			VariableBinding vb_invalidUcds = list.get(5);
+			VariableBinding vb_invalidRangingRsps = list.get(6);
+			VariableBinding vb_invalidRegRsps = list.get(7);
+			VariableBinding vb_t1Timeouts = list.get(8);
+			VariableBinding vb_t2Timeouts = list.get(9);
+			VariableBinding vb_UCCsSuccesses = list.get(10);
+			VariableBinding vb_UCCFails = list.get(11);
+			
+			long rsid = vb_value.getOid().getUnsigned(vb_value.getOid().size() - 2);
+			int value = vb_value.getVariable().toInt();
+			String code = vb_code.getVariable().toString();
+			long resets = vb_resets.getVariable().toLong();
+			long lostSyncs = vb_lostSyncs.getVariable().toLong();
+			long invalidMaps = vb_invalidMaps.getVariable().toLong();
+			long invalidUcds = vb_invalidUcds.getVariable().toLong();
+			long invalidRangingRsps = vb_invalidRangingRsps.getVariable().toLong();
+			long invalidRegRsps = vb_invalidRegRsps.getVariable().toLong();
+			long t1Timeouts = vb_t1Timeouts.getVariable().toLong();
+			long t2Timeouts = vb_t2Timeouts.getVariable().toLong();
+			long UCCsSuccesses = vb_UCCsSuccesses.getVariable().toLong();
+			long UCCFails = vb_UCCFails.getVariable().toLong();
+			
+			DocsIF3CmStatusEntry entry = new DocsIF3CmStatusEntry(
+					rsid, value, code, resets, lostSyncs, invalidMaps,
+					invalidUcds, invalidRangingRsps, invalidRegRsps,
+					t1Timeouts, t2Timeouts, UCCsSuccesses, UCCFails
+					);
+			
+			consumer.accept(entry);
+		};
+		
+		docsIf3CmStatusTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
 	}
 }
