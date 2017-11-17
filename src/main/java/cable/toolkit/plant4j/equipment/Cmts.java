@@ -3,6 +3,7 @@ package cable.toolkit.plant4j.equipment;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,8 +19,10 @@ import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.VariableBinding;
 
 import cable.toolkit.plant4j.docsis.DocsIF3CmStatusEntry;
+import cable.toolkit.plant4j.docsis.DocsIF3CmtsCmRegStatusEntry;
 import cable.toolkit.plant4j.docsis.DocsIF3Mib;
 import cable.toolkit.plant4j.docsis.DocsSubMgt3Mib;
+import cable.toolkit.plant4j.snmp.DateAndTime;
 import cable.toolkit.plant4j.snmp.MibTable;
 import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
 
@@ -191,7 +194,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		Objects.requireNonNull(this.snmp);
 		Objects.requireNonNull(this.target);
 		
-		walkCmtsCmRegStatusTable((c) -> consumer.accept(c));
+		discoverAllCableModems((c) -> consumer.accept(c));
 	}
 
 	@Override
@@ -199,12 +202,12 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		Objects.requireNonNull(this.snmp);
 		Objects.requireNonNull(this.target);
 		
-		walkCmtsCmRegStatusTable((c) -> {
+		discoverAllCableModems((c) -> {
 			threadPool.submit(() -> consumer.accept(c));
 		});
 	}
 	
-	private void walkCmtsCmRegStatusTable(Consumer<CableModem> consumer) {
+	private void discoverAllCableModems(Consumer<CableModem> consumer) {
 		MibTable docsIf3CmtsCmRegStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTable,this.snmp,this.target);
 		List<OID> columnOIDs = new ArrayList<OID>();
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
@@ -233,6 +236,82 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 			} catch (UnknownHostException e) {
 				this.logger.error("Unable to process InetAddress", e);
 			}
+		};
+		
+		docsIf3CmtsCmRegStatusTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);
+	}
+	
+	public void walkCmtsCmRegStatusTable(Consumer<DocsIF3CmtsCmRegStatusEntry> consumer) {
+		MibTable docsIf3CmtsCmRegStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTable,this.snmp,this.target);
+		List<OID> columnOIDs = new ArrayList<OID>();
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusIPv6Addr);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusIPv6LinkLocal);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusIPv4Addr);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusValue);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMdIfIndex);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMdCmSgId);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusRcpId);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusRccStatusId);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusRcsId);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTcsId);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusQosVersion);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusLastRegTime);
+		
+		Consumer<List<VariableBinding>> rowConsumer = list -> {
+			VariableBinding vb_macaddr = list.get(0);
+			VariableBinding vb_ipv6addr = list.get(1);
+			VariableBinding vb_ipv6lladdr = list.get(2);
+			VariableBinding vb_ipv4addr = list.get(3);
+			VariableBinding vb_rsvalue = list.get(4);
+			VariableBinding vb_mdifindex = list.get(5);
+			VariableBinding vb_mdcmsgid = list.get(6);
+			VariableBinding vb_rcpid = list.get(7);
+			VariableBinding vb_rccstatusid = list.get(8);
+			VariableBinding vb_rcsid = list.get(9);
+			VariableBinding vb_tcsid = list.get(10);
+			VariableBinding vb_qosversion = list.get(11);
+			VariableBinding vb_lastregtime = list.get(12);
+			
+			long rsid = vb_macaddr.getOid().lastUnsigned();
+			byte[] macAddress = ((OctetString) vb_macaddr.getVariable()).getValue();
+
+			byte[] ipv6addrArray = ((OctetString) vb_ipv6addr.getVariable()).getValue();
+			byte[] ipv6lladdrArray = ((OctetString) vb_ipv6lladdr.getVariable()).getValue();
+			byte[] ipv4addrArray = ((OctetString) vb_ipv4addr.getVariable()).getValue();
+			
+			int regStatusValue = vb_rsvalue.getVariable().toInt();
+			long mdIFIndex = vb_mdifindex.getVariable().toLong();
+			long mdCmSgId = vb_mdcmsgid.getVariable().toLong();
+			
+			byte[] rcpId = ((OctetString) vb_rcpid.getVariable()).getValue();
+			
+			long rccStatusId = vb_rccstatusid.getVariable().toLong();
+			long rcsId = vb_rcsid.getVariable().toLong();
+			long tcsId = vb_tcsid.getVariable().toLong();
+			int qosVersion = vb_qosversion.getVariable().toInt();
+			
+			byte[] lastRegTimeArray = ((OctetString) vb_lastregtime.getVariable()).getValue();
+			
+			InetAddress ipv6Addr = null;
+			InetAddress ipv6LLAddr = null;
+			InetAddress ipv4Addr = null;
+			try {
+				ipv6Addr = InetAddress.getByAddress(ipv6addrArray);
+				ipv6LLAddr = InetAddress.getByAddress(ipv6lladdrArray);
+				ipv4Addr = InetAddress.getByAddress(ipv4addrArray);
+			} catch (UnknownHostException e) {
+				this.logger.error("Unable to process InetAddress", e);
+			}
+
+			Date lastRegTime = DateAndTime.toDate(lastRegTimeArray);
+			
+			DocsIF3CmtsCmRegStatusEntry entry = new DocsIF3CmtsCmRegStatusEntry(
+					rsid, macAddress, ipv6Addr, ipv6LLAddr, ipv4Addr,
+					regStatusValue, mdIFIndex, mdCmSgId, rcpId,
+					rccStatusId, rcsId, tcsId, qosVersion, lastRegTime
+					);
+			consumer.accept(entry);
 		};
 		
 		docsIf3CmtsCmRegStatusTable.getRows(BULK_GET_CPE_IP_TABLE_NUM, columnOIDs, rowConsumer);

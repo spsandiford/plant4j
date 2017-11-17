@@ -131,7 +131,7 @@ public class CableModem {
 
 	public static String macAddrArrayToString(byte[] m) {
 		Objects.requireNonNull(m);
-		return String.format("%02X:%02X:%02X:%02X:%02X:%02X", m[0], m[1], m[2], m[3], m[4], m[5]);
+		return String.format("%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
 	}
 	
 	@Override

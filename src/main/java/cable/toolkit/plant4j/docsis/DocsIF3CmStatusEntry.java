@@ -1,6 +1,6 @@
 package cable.toolkit.plant4j.docsis;
 
-public class DocsIF3CmStatusEntry {
+public final class DocsIF3CmStatusEntry {
 	public final long rsid;
 	public final int value;
 	public final String code;
