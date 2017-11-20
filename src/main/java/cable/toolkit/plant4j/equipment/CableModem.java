@@ -1,7 +1,6 @@
 package cable.toolkit.plant4j.equipment;
 
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.snmp4j.Snmp;
 import org.snmp4j.Target;
 
+import cable.toolkit.plant4j.ieee802.MacAddress;
 import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
 
 /**
@@ -45,7 +45,7 @@ public class CableModem {
      * If the CM has multiple MAC addresses, this is the MAC
      * address associated with the MAC Domain interface.
 	 */
-	byte[] macAddress;
+	MacAddress macAddress;
 
 	/** This attribute represents the IPv6 address of this CM */
 	InetAddress ipv6addr;
@@ -62,7 +62,7 @@ public class CableModem {
 	/** This attribute represents the last time the CM registered with the CMTS */
 	Date lastRegistrationTime;
 	
-	public CableModem(byte[] macAddress) {
+	public CableModem(MacAddress macAddress) {
 		this.logger = LoggerFactory.getLogger(CableModem.class);
 		this.macAddress = macAddress;
 	}
@@ -77,8 +77,8 @@ public class CableModem {
 		this.snmp = Objects.requireNonNull(snmp);
 	}
 
-	public byte[] getMacAddress() {
-		return Arrays.copyOf(macAddress, macAddress.length);
+	public MacAddress getMacAddress() {
+		return macAddress;
 	}
 	
 	public Long getRsid() {
@@ -129,17 +129,12 @@ public class CableModem {
 		this.lastRegistrationTime = lastRegistrationTime;
 	}
 
-	public static String macAddrArrayToString(byte[] m) {
-		Objects.requireNonNull(m);
-		return String.format("%02x:%02x:%02x:%02x:%02x:%02x", m[0], m[1], m[2], m[3], m[4], m[5]);
-	}
-	
 	@Override
 	public String toString() {
 		if (this.macAddress == null) {
 			return super.toString();
 		} else {
-			return "CableModem [" + macAddrArrayToString(this.macAddress) + "]";
+			return "CableModem [" + this.macAddress.toColonString() + "]";
 		}
 	}
 

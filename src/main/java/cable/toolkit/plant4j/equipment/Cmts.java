@@ -12,10 +12,13 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.snmp4j.CommunityTarget;
 import org.snmp4j.Snmp;
 import org.snmp4j.Target;
+import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.smi.VariableBinding;
 
 import cable.toolkit.plant4j.docsis.DocsIF3CmStatusEntry;
@@ -85,6 +88,27 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		this();
 		
 		this.target = Objects.requireNonNull(target);
+		this.target.setRetries(CMTS_SNMP_RETRIES);
+		this.target.setTimeout(CMTS_SNMP_TIMEOUT);
+	}
+	
+	/**
+	 * Construct a Cmts object with a given InetAddress object.  When using
+	 * this constructor, an Snmp object must be provided before calling
+	 * any routines that communicate with the CMTS.  This constructor should
+	 * only be used if the Cmts uses SNMP version 2c.
+	 * 
+	 * @param target The InetAddress of the CMTS
+	 */
+	public Cmts(InetAddress iaddr, String community) {
+		this();
+		
+		UdpAddress cmts_addr = new UdpAddress(iaddr,SnmpConstants.DEFAULT_COMMAND_RESPONDER_PORT);
+		CommunityTarget cmts_target = new CommunityTarget();
+		cmts_target.setCommunity(new OctetString(community));
+		cmts_target.setAddress(cmts_addr);
+		cmts_target.setVersion(SnmpConstants.version2c);
+		this.target = cmts_target;
 		this.target.setRetries(CMTS_SNMP_RETRIES);
 		this.target.setTimeout(CMTS_SNMP_TIMEOUT);
 	}
@@ -214,22 +238,19 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusIPv4Addr);
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusValue);
-		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusLastRegTime);
 		
 		Consumer<List<VariableBinding>> rowConsumer = list -> {
 			VariableBinding vb_macaddr = list.get(0);
 			VariableBinding vb_ipv4addr = list.get(1);
 			VariableBinding vb_rsvalue = list.get(2);
-			VariableBinding vb_lastreg = list.get(3);
 			
 			Long rsid = vb_macaddr.getOid().getUnsigned(vb_macaddr.getOid().size() - 2);
-			byte[] macAddrArray = ((OctetString) vb_macaddr.getVariable()).getValue();
+			MacAddress macAddress = MacAddress.fromBytes(((OctetString) vb_macaddr.getVariable()).getValue());
 			byte[] ipv4addrArray = ((OctetString) vb_ipv4addr.getVariable()).getValue();
 			Integer rsValue = vb_rsvalue.getVariable().toInt();
-			byte[] lastRegTime = ((OctetString) vb_lastreg.getVariable()).getValue();
 			try {
 				InetAddress ipv4Address = InetAddress.getByAddress(ipv4addrArray);
-				CableModem cm = new CableModem(macAddrArray);
+				CableModem cm = new CableModem(macAddress);
 				cm.setRsid(rsid);
 				cm.setIpv4addr(ipv4Address);
 				cm.setRegStatusValue(rsValue);
@@ -243,6 +264,8 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 	}
 	
 	public void walkCmtsCmRegStatusTable(Consumer<DocsIF3CmtsCmRegStatusEntry> consumer) {
+		Objects.requireNonNull(this.snmp);
+		Objects.requireNonNull(this.target);
 		MibTable docsIf3CmtsCmRegStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTable,this.snmp,this.target);
 		List<OID> columnOIDs = new ArrayList<OID>();
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusMacAddr);
@@ -319,6 +342,8 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 	}
 	
 	public void walkCmStatusTable(Consumer<DocsIF3CmStatusEntry> consumer) {
+		Objects.requireNonNull(this.snmp);
+		Objects.requireNonNull(this.target);
 		MibTable docsIf3CmStatusTable = new MibTable(DocsIF3Mib.oid_docsIf3CmStatusTable,this.snmp,this.target);
 		List<OID> columnOIDs = new ArrayList<OID>();
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmStatusValue);
