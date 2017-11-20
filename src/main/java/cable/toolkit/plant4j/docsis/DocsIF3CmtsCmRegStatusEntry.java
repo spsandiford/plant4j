@@ -5,10 +5,11 @@ import java.util.Arrays;
 import java.util.Date;
 
 import cable.toolkit.plant4j.equipment.CableModem;
+import cable.toolkit.plant4j.ieee802.MacAddress;
 
 public final class DocsIF3CmtsCmRegStatusEntry {
 	public final long rsid;
-	byte[] macAddress;
+	public final MacAddress macAddress;
 	public final InetAddress ipv6Addr;
 	public final InetAddress ipv6LLAddr;
 	public final InetAddress ipv4Addr;
@@ -21,7 +22,7 @@ public final class DocsIF3CmtsCmRegStatusEntry {
 	public final long tcsId;
 	public final int qosVersion;
 	Date lastRegTime;
-	public DocsIF3CmtsCmRegStatusEntry(long rsid, byte[] macAddress, InetAddress ipv6Addr, InetAddress ipv6llAddr,
+	public DocsIF3CmtsCmRegStatusEntry(long rsid, MacAddress macAddress, InetAddress ipv6Addr, InetAddress ipv6llAddr,
 			InetAddress ipv4Addr, int regStatusValue, long mdIFIndex, long mdCmSgId, byte[] rcpId, long rccStatusId,
 			long rcsId, long tcsId, int qosVersion, Date lastRegTime) {
 		this.rsid = rsid;
@@ -39,9 +40,6 @@ public final class DocsIF3CmtsCmRegStatusEntry {
 		this.qosVersion = qosVersion;
 		this.lastRegTime = lastRegTime;
 	}
-	public byte[] getMacAddress() {
-		return Arrays.copyOf(macAddress, macAddress.length);
-	}
 	public String getRcpId() {
 		if ((rcpId != null) && (rcpId.length == 5)) {
 			return String.format("%02X:%02X:%02X:%02X:%02X", rcpId[0], rcpId[1], rcpId[2], rcpId[3], rcpId[4]);
@@ -55,6 +53,6 @@ public final class DocsIF3CmtsCmRegStatusEntry {
 	
 	@Override
 	public String toString() {
-		return Long.toString(rsid) + "[" + CableModem.macAddrArrayToString(macAddress) + "]";
+		return Long.toString(rsid) + "[" + macAddress.toString() + "]";
 	}
 }

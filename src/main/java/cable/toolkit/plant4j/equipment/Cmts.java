@@ -22,6 +22,7 @@ import cable.toolkit.plant4j.docsis.DocsIF3CmStatusEntry;
 import cable.toolkit.plant4j.docsis.DocsIF3CmtsCmRegStatusEntry;
 import cable.toolkit.plant4j.docsis.DocsIF3Mib;
 import cable.toolkit.plant4j.docsis.DocsSubMgt3Mib;
+import cable.toolkit.plant4j.ieee802.MacAddress;
 import cable.toolkit.plant4j.snmp.DateAndTime;
 import cable.toolkit.plant4j.snmp.MibTable;
 import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
@@ -274,7 +275,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 			VariableBinding vb_lastregtime = list.get(12);
 			
 			long rsid = vb_macaddr.getOid().lastUnsigned();
-			byte[] macAddress = ((OctetString) vb_macaddr.getVariable()).getValue();
+			MacAddress macAddress = MacAddress.fromBytes(((OctetString) vb_macaddr.getVariable()).getValue());
 
 			byte[] ipv6addrArray = ((OctetString) vb_ipv6addr.getVariable()).getValue();
 			byte[] ipv6lladdrArray = ((OctetString) vb_ipv6lladdr.getVariable()).getValue();
