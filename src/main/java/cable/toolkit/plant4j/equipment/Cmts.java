@@ -51,6 +51,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 	Target target;
 	Logger logger;
 	SnmpAgentSystemInfo systemDetails;
+	String hostname;
 	
 	/**
 	 * Default constructor
@@ -158,7 +159,15 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		
 		return Optional.ofNullable(this.systemDetails);
 	}
-
+	
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
+	}
+	
+	public Optional<String> getHostname() {
+		return Optional.ofNullable(this.hostname);
+	}
+	
 	/**
 	 * Query the CMTS for a list of all CPE IP addresses and the CPE types.
 	 * The given consumer is called for each CPE that is discovered.
