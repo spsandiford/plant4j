@@ -40,23 +40,23 @@ public class MacAddressTest {
 		});
 	}
 
-//	@Test
-//	public void testFromStringGoodColon() {
-//		MacAddress macaddr = MacAddress.fromString("E4:48:C7:Ab:cd:ef");
-//		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
-//	}
-//
-//	@Test
-//	public void testFromStringGoodHyphen() {
-//		MacAddress macaddr = MacAddress.fromString("e4-48-C7-aB-cd-Ef");
-//		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
-//	}
-//
-//	@Test
-//	public void testFromStringGoodDots() {
-//		MacAddress macaddr = MacAddress.fromString("E448.c7aB.cdeF");
-//		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
-//	}
+	@Test
+	public void testFromStringGoodColon() {
+		MacAddress macaddr = MacAddress.fromString("E4:48:C7:Ab:cd:ef");
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+	}
+
+	@Test
+	public void testFromStringGoodHyphen() {
+		MacAddress macaddr = MacAddress.fromString("e4-48-C7-aB-cd-Ef");
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+	}
+
+	@Test
+	public void testFromStringGoodDots() {
+		MacAddress macaddr = MacAddress.fromString("E448.c7aB.cdeF");
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+	}
 
 //	@Test
 //	public void testFromStringBad() {

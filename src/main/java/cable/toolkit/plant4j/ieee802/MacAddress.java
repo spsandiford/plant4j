@@ -2,6 +2,8 @@ package cable.toolkit.plant4j.ieee802;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A media access control address (MAC address) of a computer is a unique identifier 
@@ -35,7 +37,21 @@ public final class MacAddress {
 	}
 	
 	public static MacAddress fromString(String macAddr) {
-		return null;
+		Objects.requireNonNull(macAddr);
+		String onlyHex = macAddr.replaceAll("[^a-fA-F0-9]", "");
+		Pattern p = Pattern.compile("^([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})$");
+		Matcher m = p.matcher(onlyHex);
+		if (m.matches()) {
+			byte[] mac_byteArray = new byte[6];
+			for (int i=0; i<6; i++) {
+				String octet_hex = m.group(i+1);
+				int octet = Integer.parseInt(octet_hex, 16);
+				mac_byteArray[i] = (byte)(octet & 0xFF);
+			}
+			return new MacAddress(mac_byteArray);
+		} else {
+			return null;
+		}
 	}
 	
 	public static MacAddress broadcastMacAddress() {
