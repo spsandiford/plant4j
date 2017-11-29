@@ -290,6 +290,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusTcsId);
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusQosVersion);
 		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusLastRegTime);
+		columnOIDs.add(DocsIF3Mib.oid_docsIf3CmtsCmRegStatusAddrResolutionReqs);
 		
 		Consumer<List<VariableBinding>> rowConsumer = list -> {
 			VariableBinding vb_macaddr = list.get(0);
@@ -305,6 +306,7 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 			VariableBinding vb_tcsid = list.get(10);
 			VariableBinding vb_qosversion = list.get(11);
 			VariableBinding vb_lastregtime = list.get(12);
+			VariableBinding vb_addrResReqs = list.get(13);
 			
 			long rsid = vb_macaddr.getOid().lastUnsigned();
 			MacAddress macAddress = MacAddress.fromBytes(((OctetString) vb_macaddr.getVariable()).getValue());
@@ -339,10 +341,12 @@ public class Cmts implements CpeListProducer, CableModemListProducer {
 
 			Date lastRegTime = DateAndTime.toDate(lastRegTimeArray);
 			
+			long addrResReqs = vb_addrResReqs.getVariable().toLong();
+
 			DocsIF3CmtsCmRegStatusEntry entry = new DocsIF3CmtsCmRegStatusEntry(
 					rsid, macAddress, ipv6Addr, ipv6LLAddr, ipv4Addr,
 					regStatusValue, mdIFIndex, mdCmSgId, rcpId,
-					rccStatusId, rcsId, tcsId, qosVersion, lastRegTime
+					rccStatusId, rcsId, tcsId, qosVersion, lastRegTime, addrResReqs
 					);
 			consumer.accept(entry);
 		};

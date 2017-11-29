@@ -726,4 +726,33 @@ public class DocsIF3Mib {
 	 *      ::= { docsIf3CmtsCmRegStatusEntry 14 }
 	 */
 	public static final OID oid_docsIf3CmtsCmRegStatusLastRegTime = new OID("1.3.6.1.4.1.4491.2.1.20.1.3.1.14");
+	
+	/**
+	 * docsIf3CmtsCmRegStatusAddrResolutionReqs OBJECT-TYPE
+	 *      SYNTAX      Counter32
+	 *      MAX-ACCESS  read-only
+	 *      STATUS      current
+	 *      DESCRIPTION
+	 *         "This attribute counts represents the number of upstream
+	 *         packets received on the SIDs assigned to a CM that
+	 *         are any of the following:
+	 *         Upstream IPv4 ARP Requests
+	 *         Upstream IPv6 Neighbor Solicitation Requests
+	 *         (For routing CMTSs) Upstream IPv4 or IPv6 packets to
+	 *         unresolved destinations in locally connected downstream
+	 *         subnets in the HFC.
+	 *         Discontinuities in the value of this counter can occur
+	 *         at re-initialization of the managed system, and at
+	 *         other times as indicated by the value of
+	 *         ifCounterDiscontinuityTime for the associated MAC Domain
+	 *         interface."
+	 *      REFERENCE
+	 *          "DOCSIS 3.0 Security Specification CM-SP-MULPIv3.0-I08-080522,
+	 *          Secure Provisioning section.
+	 *          RFC 2863."
+	 *      ::= { docsIf3CmtsCmRegStatusEntry 15 }
+
+	 */
+	public static final OID oid_docsIf3CmtsCmRegStatusAddrResolutionReqs = new OID("1.3.6.1.4.1.4491.2.1.20.1.3.1.15");
+	
 }
