@@ -24,7 +24,7 @@ import org.snmp4j.smi.OID;
  */
 public class DocsSubMgt3Mib {
 
-	public static final OID oid_docsIf3Mib = new OID("1.3.6.1.4.1.4491.2.1.10");
+	public static final OID oid_docsSubmgt3Mib = new OID("1.3.6.1.4.1.4491.2.1.10");
 	
 
 	/**
