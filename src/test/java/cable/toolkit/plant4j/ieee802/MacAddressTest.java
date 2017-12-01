@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -16,8 +17,9 @@ public class MacAddressTest {
 	
 	@Test
 	public void testFromBytesGood() {
-		MacAddress macaddr = MacAddress.fromBytes(goodMac1Bytes);
-		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+		Optional<MacAddress> macaddr = MacAddress.fromBytes(goodMac1Bytes);
+		assertTrue(macaddr.isPresent());
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.get().addressOctets));
 	}
 	
 	@Test
@@ -42,20 +44,23 @@ public class MacAddressTest {
 
 	@Test
 	public void testFromStringGoodColon() {
-		MacAddress macaddr = MacAddress.fromString("E4:48:C7:Ab:cd:ef");
-		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+		Optional<MacAddress> macaddr = MacAddress.fromString("E4:48:C7:Ab:cd:ef");
+		assertTrue(macaddr.isPresent());
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.get().addressOctets));
 	}
 
 	@Test
 	public void testFromStringGoodHyphen() {
-		MacAddress macaddr = MacAddress.fromString("e4-48-C7-aB-cd-Ef");
-		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+		Optional<MacAddress> macaddr = MacAddress.fromString("e4-48-C7-aB-cd-Ef");
+		assertTrue(macaddr.isPresent());
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.get().addressOctets));
 	}
 
 	@Test
 	public void testFromStringGoodDots() {
-		MacAddress macaddr = MacAddress.fromString("E448.c7aB.cdeF");
-		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.addressOctets));
+		Optional<MacAddress> macaddr = MacAddress.fromString("E448.c7aB.cdeF");
+		assertTrue(macaddr.isPresent());
+		assertTrue(Arrays.equals(goodMac1Bytes, macaddr.get().addressOctets));
 	}
 
 //	@Test
@@ -86,20 +91,23 @@ public class MacAddressTest {
 
 	@Test
 	public void testToHyphenString() {
-		MacAddress macaddr = MacAddress.fromBytes(goodMac1Bytes);
-		assertEquals("e4-48-c7-ab-cd-ef",macaddr.toHyphenString());
+		Optional<MacAddress> macaddr = MacAddress.fromBytes(goodMac1Bytes);
+		assertTrue(macaddr.isPresent());
+		assertEquals("e4-48-c7-ab-cd-ef",macaddr.get().toHyphenString());
 	}
 
 	@Test
 	public void testToColonString() {
-		MacAddress macaddr = MacAddress.fromBytes(goodMac1Bytes);
-		assertEquals("e4:48:c7:ab:cd:ef",macaddr.toColonString());
+		Optional<MacAddress> macaddr = MacAddress.fromBytes(goodMac1Bytes);
+		assertTrue(macaddr.isPresent());
+		assertEquals("e4:48:c7:ab:cd:ef",macaddr.get().toColonString());
 	}
 
 	@Test
 	public void testToDotString() {
-		MacAddress macaddr = MacAddress.fromBytes(goodMac1Bytes);
-		assertEquals("e448.c7ab.cdef",macaddr.toDotString());
+		Optional<MacAddress> macaddr = MacAddress.fromBytes(goodMac1Bytes);
+		assertTrue(macaddr.isPresent());
+		assertEquals("e448.c7ab.cdef",macaddr.get().toDotString());
 	}
 	
 	@Test
@@ -121,13 +129,16 @@ public class MacAddressTest {
 	
 	@Test
 	public void testEquals() {
-		MacAddress m1 = MacAddress.fromBytes(goodMac1Bytes);
-		MacAddress m2 = MacAddress.fromBytes(goodMac1Bytes);
-		MacAddress m3 = MacAddress.fromBytes(goodMac2Bytes);
-		assertTrue(m1.equals(m2));
-		assertFalse(m1.equals(m3));
-		assertTrue(m2.equals(m1));
-		assertFalse(m2.equals(m3));
+		Optional<MacAddress> m1 = MacAddress.fromBytes(goodMac1Bytes);
+		Optional<MacAddress> m2 = MacAddress.fromBytes(goodMac1Bytes);
+		Optional<MacAddress> m3 = MacAddress.fromBytes(goodMac2Bytes);
+		assertTrue(m1.isPresent());
+		assertTrue(m2.isPresent());
+		assertTrue(m3.isPresent());
+		assertTrue(m1.get().equals(m2));
+		assertFalse(m1.get().equals(m3));
+		assertTrue(m2.get().equals(m1));
+		assertFalse(m2.get().equals(m3));
 	}
 
 }

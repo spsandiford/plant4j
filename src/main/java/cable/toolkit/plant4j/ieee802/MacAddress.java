@@ -2,6 +2,7 @@ package cable.toolkit.plant4j.ieee802;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,15 +29,26 @@ public final class MacAddress {
 	}
 	
 	/**
-	 * Create a MAC address from the 6 octets of EUI-48 format
+	 * Create a MacAddress object from the 6 octets of EUI-48 format
 	 * @param address 6 byte array
-	 * @return
 	 */
-	public static MacAddress fromBytes(byte[] address) {
-		return new MacAddress(address);
+	public static Optional<MacAddress> fromBytes(byte[] address) {
+		MacAddress result = null;
+		if (address.length == 6) {
+			result = new MacAddress(address);
+		}
+		return Optional.ofNullable(result);
 	}
 	
-	public static MacAddress fromString(String macAddr) {
+	/**
+	 * Create a MacAddress object from the string representation of a MAC-48 address.
+	 * Suitable formats are:
+	 *  - 01-23-45-67-89-ab
+	 *  - 01:23:45:67:89:ab
+	 *  - 0123.4567.89ab
+	 */
+	public static Optional<MacAddress> fromString(String macAddr) {
+		MacAddress result = null;
 		Objects.requireNonNull(macAddr);
 		String onlyHex = macAddr.replaceAll("[^a-fA-F0-9]", "");
 		Pattern p = Pattern.compile("^([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})$");
@@ -48,12 +60,16 @@ public final class MacAddress {
 				int octet = Integer.parseInt(octet_hex, 16);
 				mac_byteArray[i] = (byte)(octet & 0xFF);
 			}
-			return new MacAddress(mac_byteArray);
-		} else {
-			return null;
+			result = new MacAddress(mac_byteArray);
 		}
+		return Optional.ofNullable(result);
 	}
 	
+	/**
+	 * Packets sent to the broadcast address, all one bits, are received by all stations on a local area network.
+	 * In hexadecimal the broadcast address would be FF:FF:FF:FF:FF:FF. A broadcast frame is flooded and is
+	 * forwarded to and accepted by all other nodes.
+	 */
 	public static MacAddress broadcastMacAddress() {
 		byte[] broadcastBytes = { (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF };
 		return new MacAddress(broadcastBytes);
