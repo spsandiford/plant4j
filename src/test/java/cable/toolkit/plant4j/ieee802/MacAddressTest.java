@@ -26,8 +26,10 @@ public class MacAddressTest {
 	public void testFromBytesBad() {
 		try {
 			byte[] badmacaddress = null;
-			MacAddress.fromBytes(badmacaddress);
-			fail("null MAC Address should not be accepted");
+			Optional<MacAddress> macAddr = MacAddress.fromBytes(badmacaddress);
+			if (macAddr.isPresent()) {
+				fail("null MAC Address should not be accepted");
+			}
 		} catch (Exception ex) {
 		}
 		
@@ -35,8 +37,10 @@ public class MacAddressTest {
 		badMACAddressLengths.forEach(l -> {
 			try {
 				byte[] badmacaddress = new byte[l];
-				MacAddress.fromBytes(badmacaddress);
-				fail("MAC Address of length" + l + " should not be accepted");
+				Optional<MacAddress> macAddr = MacAddress.fromBytes(badmacaddress);
+				if (macAddr.isPresent()) {
+					fail("MAC Address of length" + l + " should not be accepted");
+				}
 			} catch (Exception ex) {
 			}
 		});
@@ -135,10 +139,10 @@ public class MacAddressTest {
 		assertTrue(m1.isPresent());
 		assertTrue(m2.isPresent());
 		assertTrue(m3.isPresent());
-		assertTrue(m1.get().equals(m2));
-		assertFalse(m1.get().equals(m3));
-		assertTrue(m2.get().equals(m1));
-		assertFalse(m2.get().equals(m3));
+		assertTrue(m1.get().equals(m2.get()));
+		assertFalse(m1.get().equals(m3.get()));
+		assertTrue(m2.get().equals(m1.get()));
+		assertFalse(m2.get().equals(m3.get()));
 	}
 
 }
