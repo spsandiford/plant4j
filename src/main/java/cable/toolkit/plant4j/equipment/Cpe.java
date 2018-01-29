@@ -21,7 +21,7 @@ import cable.toolkit.plant4j.snmp.SnmpAgentSystemInfo;
  */
 public class Cpe {
 	private static final int CPE_SNMP_RETRIES = 2;
-	private static final int CPE_SNMP_TIMEOUT = 3500;
+	private static final long CPE_SNMP_TIMEOUT = 3500;
 
 	Target target;
 	Snmp snmp;
@@ -30,7 +30,7 @@ public class Cpe {
 	SnmpAgentSystemInfo systemDetails;
 	Logger logger;
 	Long rsid;
-	Integer cpeIpId;
+	Long cpeIpId;
 	
 	public Cpe() {
 		this.logger = LoggerFactory.getLogger(Cpe.class);
@@ -67,10 +67,10 @@ public class Cpe {
 		this.rsid = rsid;
 	}
 
-	public Integer getCpeIpId() {
+	public Long getCpeIpId() {
 		return cpeIpId;
 	}
-	public void setCpeIpId(Integer cpeIpId) {
+	public void setCpeIpId(Long cpeIpId) {
 		this.cpeIpId = cpeIpId;
 	}
 
