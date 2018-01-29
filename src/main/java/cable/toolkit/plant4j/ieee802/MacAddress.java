@@ -6,6 +6,9 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A media access control address (MAC address) of a computer is a unique identifier 
  * assigned to network interfaces for communications at the data link layer of a 
@@ -18,6 +21,7 @@ import java.util.regex.Pattern;
  */
 public final class MacAddress {
 	
+	private static final Logger logger = LoggerFactory.getLogger(MacAddress.class);
 	protected final byte[] addressOctets;
 	
 	private MacAddress(byte[] addressOctets) {
@@ -34,8 +38,10 @@ public final class MacAddress {
 	 */
 	public static Optional<MacAddress> fromBytes(byte[] address) {
 		MacAddress result = null;
-		if (address.length == 6) {
+		try {
 			result = new MacAddress(address);
+		} catch (IllegalArgumentException ex){
+			logger.error("MAC address byte arrays must be 6 bytes");
 		}
 		return Optional.ofNullable(result);
 	}
@@ -61,6 +67,8 @@ public final class MacAddress {
 				mac_byteArray[i] = (byte)(octet & 0xFF);
 			}
 			result = new MacAddress(mac_byteArray);
+		} else {
+			logger.error("MAC Address " + macAddr + "is not in a proper format");
 		}
 		return Optional.ofNullable(result);
 	}
@@ -87,6 +95,9 @@ public final class MacAddress {
 	
 	@Override
 	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
 		if (obj instanceof MacAddress) {
 			try {
 				MacAddress otherAddr = (MacAddress)obj;
@@ -101,6 +112,11 @@ public final class MacAddress {
 		} else {
 			return false;
 		}
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(MacAddress.class,this.addressOctets);
 	}
 
 	public String toHyphenString() {
